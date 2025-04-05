@@ -134,7 +134,7 @@ iSG_Lit = function(u, w){
 }
 
 inSG_Lit = function(u, w) {
-  return(1 - iSG_Lit(u, w))  
+  return(1 - iSG_Lit("NPsg", w))  
 }
 
 
@@ -358,7 +358,6 @@ Q_equiv <- function(Q, w) {
 #   P_w(w) * P_Q(Q) * interpret(u, w, i)
 # }
 
-library(comprehenr)
 # ==========================
 # Normalization Function
 # ==========================
@@ -394,56 +393,119 @@ expand.grid(worlds, QuDs, messages)
 # }
 
 
+library(comprehenr)
 library(data.table)
 
-L0_gen <- function(Q, u, i) {
-  probs <- vector()
-  for (w in worlds) {
-    probs <- append(probs, P_w(w) * P_Q(Q) * interpret(u, w, i))
-  }
-  w_map <- data.table(
-    worlds = worlds,
-    probs = probs
-  )
-  if (w_map[, sum(probs)] != 0) {
-    w_map[, probs := probs / sum(probs)]
-  }
-  w_map
+normalize <- function(dt) {
+  dt[, probs := if (sum(probs) != 0) probs / sum(probs) else probs][]
 }
-
-L0 <- function(w, Q, u, i) {
-  L0_gen(Q, u, i)[[w]]
-}
-
-L0_gen("Qfine", "NPsg", interpretations[["iLitLitLitLit"]])
-
-L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
-
-# L0 <- function(w, Q, u, i) {
-#   probs <- mapply(worlds, function(w_prime) P_w(w_prime) * P_Q(Q) * interpret(u, w_prime, i))
-#   return(normalize(probs)[w])
-# }
-
-
-
-# L0 <- function(w, Q, u, i) {
-#   probs <- sapply(worlds, function(w_prime) return(w_prime=P_w(w_prime) * P_Q(Q) * interpret(u, w_prime, i)))
-#   return(normalize(probs)[w])
-# }
-
 
 # ==========================
 # Literal Listener (L0)
 # ==========================
 
-# L_0 <- function(w, Q, u, i) {
-#   probs <- sapply(worlds, function(w_prime) P_w(w_prime) * P_Q(Q) * interpret(u, w_prime, i))
-#   return(normalize(probs)[w])
-# }
+L0_gen <- function(Q, u, i) {
+  probs <- to_vec(for (w in worlds) {
+                    P_w(w) * P_Q(Q) * interpret(u, w, i)
+  print(P_w(w))
+  print(P_Q(Q))
+  print(interpret(u, w, i))
+})
+  dt <- data.table(
+    worlds = worlds,
+    probs = probs
+  )
+  normalize(dt)
+}
+
+interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
+
+L0 <- function(w, Q, u, i) {
+  L0_gen(Q, u, i)[worlds == w, probs]
+}
+
+L0_gen("Qfine", "NPsg", interpretations[["iLitLitLitLit"]])
+
+L0_gen("Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+
+L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+
+
+
+
+
+
 
 # ==========================
 # Recursive Pragmatic Layers
 # ==========================
+lambda <- 5
+U1 <- function(w, Q, u) {
+  prob_surprisal_vec <- vector()
+  for (i in names(interpretations)) {
+    L0_vec <- vector()
+    for (v in Q_equiv(Q, w)) {
+      L0_vec <- append(L0_vec, L0(v, Q, u, interpretations[[i]]))
+      L0_sum <- sum(L0_vec)
+    }
+    prob_surprisal_vec <- append(prob_surprisal_vec, P_i(i) * log(L0_sum))
+  }
+  sum(prob_surprisal_vec) - cost(u)
+}
+
+S1_gen <- function(Q, u) {
+  probs <- sapply(worlds, function(w) { exp(lambda * U1(w, Q, u)) } )
+  dt <- data.table(worlds = worlds, probs = probs)
+  normalize(dt)
+}
+
+S1 <- function(w, Q, u) {
+  S1_gen(Q, u)[worlds == w, probs]
+}
+
+S1_gen("Qfine", "n!1")
+
+S1("w0", "Qex", "nNPpl")
+
+Un <- function(n, Q, u, w) {
+  if (n == 1) {
+    probs <- vector()
+    for (i in interpretations) {
+      L0_list <- append(L0_list, L0_gen(Q, u, i))
+    }
+  }
+
+}
+Sn_gen <- function(n, Q, u, i) {
+  if (n == 1) {
+    L0_dt <- L0_gen(Q, u, i)
+    L0_dt[, probs := exp(lambda * probs / exp(cost(u)))]
+  } else {
+    Ln_1_dt <- Ln_gen(n - 1, Q, u, i)
+    Ln_1_dt <- normalize(Ln_1_dt)
+    dt <- Ln_1_dt[, probs := exp(lambda * probs) / exp(cost(messages))]
+    normalize(dt)
+  }
+}
+
+Ln_gen <- function(n, Q, u, i) {
+  if (n == 0) {
+    L0_gen(Q, u, i)
+  } else {
+    
+  }
+
+}
+
+L_n <- function(n, w, Q, u, i) {
+  if (n == 0) {
+    return(L_0(w, Q, u, i))
+  } else {
+    posteriors <- sapply(worlds, function(w_prime) S_n(n - 1, u, w_prime, Q, i) * P_w(w_prime))
+    return(normalize(posteriors)[w])
+  }
+}
+
 
 L_n <- function(n, w, Q, u, i) {
   if (n == 0) {
