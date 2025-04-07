@@ -380,11 +380,11 @@ U1_gen <- function(Q, u) {
   data.table(world = worlds) %>%
     rmutate(util = {
       ec <- Q_equiv(Q, world)
-      L0_dt  %>%
+      L0_dt %>%
         rmutate(L0 = L0 %>%
           filter(world %in% ec) %>%
           pull(prob) %>%
-          sum() %>% 
+          sum() %>%
           {
             P_i(inter) * log(.)
           }) %>%
