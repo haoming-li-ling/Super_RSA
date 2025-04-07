@@ -317,48 +317,9 @@ expand.grid(worlds, QuDs, messages)
 # library(comprehenr)
 library(data.table)
 library(tidyverse)
+library(magrittr)
+library(dplyr)
 
-normalize <- function(dt) {
-  dt %>% mutate(prob = if (sum(prob) != 0) prob / sum(prob) else prob)
-}
-
-# ==========================
-# Literal Listener (L0)
-# ==========================
-
-L0_gen <- function(Q, u, i) {
-  data.table(world = worlds) %>%
-    rowwise() %>%
-    mutate(prob = P_w(world) * P_Q(Q) * interpret(u, world, i)) %>%
-    ungroup() %>%
-    normalize()
-}
-
-
-L0 <- function(w, Q, u, i) {
-  L0_gen(Q, u, i)[worlds == w, probs]
-}
-
-L0_gen("Qfine", "NPsg", interpretations[["iLitLitLitLit"]])
-L0_gen("Qfine", "n!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qfine", "!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qex", "!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
-
-L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
-
-
-
-
-
-
-
-# ==========================
-# Recursive Pragmatic Layers
-# ==========================
-lambda <- 5
-
-# Do rowwise mutate and ungroup
 rmutate <- function(data, ...) {
   data %>%
     rowwise() %>%
@@ -372,6 +333,35 @@ rtransmute <- function(data, ...) {
     transmute(...) %>%
     ungroup()
 }
+
+normalize <- function(dt) {
+  dt %>% mutate(prob = if (sum(prob) != 0) prob / sum(prob) else prob)
+}
+
+# ==========================
+# Literal Listener (L0)
+# ==========================
+
+L0_gen <- function(Q, u, i) {
+  data.table(world = worlds) %>%
+    rmutate(prob = P_w(world) * P_Q(Q) * interpret(u, world, i)) %>%
+    normalize()
+}
+
+L0_gen("Qfine", "NPsg", interpretations[["iLitLitLitLit"]])
+L0_gen("Qfine", "n!1", interpretations[["iLitLitLitLit"]])
+L0_gen("Qfine", "!1", interpretations[["iLitLitLitLit"]])
+L0_gen("Qex", "!1", interpretations[["iLitLitLitLit"]])
+L0_gen("Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+
+L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+
+# ==========================
+# Recursive Pragmatic Layers
+# ==========================
+lambda <- 5
+
+# Do rowwise mutate and ungroup
 
 U1_gen <- function(Q, u) {
   L0_dt <- data.table(inter = names(interpretations)) %>%
@@ -402,10 +392,6 @@ S1_gen <- function(Q, u) {
     normalize()
 }
 
-S1 <- function(w, Q, u) {
-  S1_gen(Q, u)[world == w, prob]
-}
-
 
 Ln_gen <- function(n, Q, u) {
   if (n == 0) {
@@ -415,10 +401,6 @@ Ln_gen <- function(n, Q, u) {
       mutate(prob = Vectorize(P_w)(world) * P_Q(Q) * prob) %>%
       normalize()
   }
-}
-
-Ln <- function(w, n, Q, u) {
-  Ln_gen(n, Q, u)[world == w, prob]
 }
 
 Un_gen <- function(n, Q, u) {
@@ -440,10 +422,6 @@ Un_gen <- function(n, Q, u) {
   }
 }
 
-Un <- function(w, n, Q, u) {
-  Un_gen(n, Q, u)[world == w, util]
-}
-
 Sn_gen <- function(n, Q, u) {
   if (n == 1) {
     S1_gen(Q, u)
@@ -452,10 +430,6 @@ Sn_gen <- function(n, Q, u) {
       transmute(world, prob = exp(lambda * util)) %>%
       normalize()
   }
-}
-
-Sn <- function(w, n, Q, u) {
-  Sn_gen(n, Q, u)[world == w, prob]
 }
 
 U1("w0", "Qex", "!1")
