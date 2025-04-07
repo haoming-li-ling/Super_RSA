@@ -374,44 +374,23 @@ rtransmute <- function(data, ...) {
 }
 
 U1_gen <- function(Q, u) {
-  # L0_dt <- data.table(inter = names(interpretations)) %>%
-  #   rmutate(L0 = list(L0_gen(Q, u, interpretations[[inter]])))
+  L0_dt <- data.table(inter = names(interpretations)) %>%
+    rmutate(L0 = list(L0_gen(Q, u, interpretations[[inter]])))
 
-  # data.table(world = worlds) %>%
-  #   rmutate(util = {
-  #     ec <- Q_equiv(Q, world)
-  #     L0_dt  %>%
-  #       rmutate(L0 = L0 %>%
-  #         filter(world %in% ec) %>%
-  #         pull(prob) %>%
-  #         sum() %T>% { cat("sum of probs", ., "\n") } %>%
-  #         {
-  #           P_i(inter) * log(.)
-  #         }) %>%
-  #       pull(L0) %>%
-  #       sum()
-  #   })
-
-  L0_i_list <- interpretations %>%
-    map(\(i) L0_gen(Q, u, i))
-  utilities <- worlds %>%
-    map_vec(\(w) {
-      L0_i_list %>%
-        imap_vec(\(dt, i) {
-          Q_equiv(Q, w) %>%
-            map_vec(\(v) {
-                      dt %>% filter(world == v) %>%
-                        pull(prob)
-              # dt[world == v, prob]
-            }) %>%
-            sum() %>%
-            {
-              P_i(i) * log(.)
-            }
-        }) %>%
+  data.table(world = worlds) %>%
+    rmutate(util = {
+      ec <- Q_equiv(Q, world)
+      L0_dt  %>%
+        rmutate(L0 = L0 %>%
+          filter(world %in% ec) %>%
+          pull(prob) %>%
+          sum() %>% 
+          {
+            P_i(inter) * log(.)
+          }) %>%
+        pull(L0) %>%
         sum()
     })
-  data.table(world = worlds, util = utilities)
 }
 
 U1_gen("Qex", "NPsg")

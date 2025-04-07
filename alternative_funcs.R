@@ -15,6 +15,27 @@ U1_gen <- function(Q, u) {
   #       sum()
   #   })
   # data.table(world = worlds, util = utilities)
+
+  # L0_i_list <- interpretations %>%
+  #   map(\(i) L0_gen(Q, u, i))
+  # utilities <- worlds %>%
+  #   map_vec(\(w) {
+  #     L0_i_list %>%
+  #       imap_vec(\(dt, i) {
+  #         Q_equiv(Q, w) %>%
+  #           map_vec(\(v) {
+  #                     dt %>% filter(world == v) %>%
+  #                       pull(prob)
+  #             # dt[world == v, prob]
+  #           }) %>%
+  #           sum() %>%
+  #           {
+  #             P_i(i) * log(.)
+  #           }
+  #       }) %>%
+  #       sum()
+  #   })
+  # data.table(world = worlds, util = utilities)
   data.table(world = worlds) %>%
     rowwise() %>%
     mutate(util = {
