@@ -1,7 +1,5 @@
-
-
 # Parameters and initial setup
-lambda <- 5  # Rationality parameter
+lambda <- 5 # Rationality parameter
 cost <- function(u) {
   switch(u,
     NPpl = 0,
@@ -49,57 +47,76 @@ P_i <- function(i) {
 
 # Sub-interpretation function
 # Worlds: w0, w1, w2+
-iSG_Lit = function(u, w){
-  if (w == "w0") return(0)
-  else return(1)
+iSG_Lit <- function(u, w) {
+  if (w == "w0") {
+    return(0)
+  } else {
+    return(1)
+  }
 }
 
-inSG_Lit = function(u, w) {
-  return(1 - iSG_Lit(u, w))  
-}
-
-
-iSG_Exh = function(u, w){
-  if (w == "w0") return(0)
-  if (w == "w2+") return(0)
-  else return(1)
+inSG_Lit <- function(u, w) {
+  return(1 - iSG_Lit(u, w))
 }
 
 
-inSG_Exh = function(u, w) {
-  return(1 - iSG_Exh(u, w))  
+iSG_Exh <- function(u, w) {
+  if (w == "w0") {
+    return(0)
+  }
+  if (w == "w2+") {
+    return(0)
+  } else {
+    return(1)
+  }
+}
+
+
+inSG_Exh <- function(u, w) {
+  return(1 - iSG_Exh(u, w))
 }
 
 
 # Note iSG_Lit and inSG_Lit are essentially the same as iPL_Lit and inPL_Lit
 
 
-iPL_Lit = function(u, w){
-  if (w == "w0") return(0)
-  else return(1)
+iPL_Lit <- function(u, w) {
+  if (w == "w0") {
+    return(0)
+  } else {
+    return(1)
+  }
 }
 
-inPL_Lit = function(u, w) {
-  return(1 - iPL_Lit(u, w))  
+inPL_Lit <- function(u, w) {
+  return(1 - iPL_Lit(u, w))
 }
 
 
-iPL_Exh = function(u, w){
-  if (w == "w0") return(0)
-  if (w == "w1") return(0)
-  else return(1)
+iPL_Exh <- function(u, w) {
+  if (w == "w0") {
+    return(0)
+  }
+  if (w == "w1") {
+    return(0)
+  } else {
+    return(1)
+  }
 }
 
-inPL_Exh = function(u, w) {
-  return(1 - iPL_Exh(u, w))  
+inPL_Exh <- function(u, w) {
+  return(1 - iPL_Exh(u, w))
 }
 
-i1 = function(u, w){
-  if (w == "w1") return (1)
-  else return(0)
+i1 <- function(u, w) {
+  if (w == "w1") {
+    return(1)
+  } else {
+    return(0)
+  }
 }
 
-in1 = function(u, w){
+in1 <- function(u, w) {
   return(1 - i1(u, w))
 }
 
@@ -271,6 +288,14 @@ interpret <- function(u, w, i) {
   return(i(u, w))
 }
 
+interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
+interpret("!1", "w0", interpretations[["iLitLitLitLit"]])
+interpret("!1", "w1", interpretations[["iLitLitLitLit"]])
+interpret("!1", "w2+", interpretations[["iLitLitLitLit"]])
+interpret("n!1", "w0", interpretations[["iLitLitLitLit"]])
+interpret("n!1", "w1", interpretations[["iLitLitLitLit"]])
+interpret("n!1", "w2+", interpretations[["iLitLitLitLit"]])
+
 # Worlds, QuDs, messages
 worlds <- c("w0", "w1", "w2+")
 QuDs <- c("Qex", "Qml", "Qfine")
@@ -309,7 +334,7 @@ library(data.table)
 library(tidyverse)
 
 normalize <- function(dt) {
-  dt[, probs := if (sum(probs) != 0) probs / sum(probs) else probs][]
+  dt %>% mutate(prob = if (sum(prob) != 0) prob / sum(prob) else prob)
 }
 
 # ==========================
@@ -317,19 +342,13 @@ normalize <- function(dt) {
 # ==========================
 
 L0_gen <- function(Q, u, i) {
-  probs <- worlds %>%
-    map_vec(\(w) P_w(w) * P_Q(Q) * interpret(u, w, i))
-  data.table(worlds = worlds, probs = probs) %>%
+  data.table(world = worlds) %>%
+    rowwise() %>%
+    mutate(prob = P_w(world) * P_Q(Q) * interpret(u, world, i)) %>%
+    ungroup() %>%
     normalize()
 }
 
-interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
-interpret("!1", "w0", interpretations[["iLitLitLitLit"]])
-interpret("!1", "w1", interpretations[["iLitLitLitLit"]])
-interpret("!1", "w2+", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w0", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w1", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w2+", interpretations[["iLitLitLitLit"]])
 
 L0 <- function(w, Q, u, i) {
   L0_gen(Q, u, i)[worlds == w, probs]
@@ -359,35 +378,36 @@ lambda <- 5
 U1_gen <- function(Q, u) {
   L0_i_list <- interpretations %>%
     map(\(i) L0_gen(Q, u, i))
-  utilities <- worlds %>%
-    map_vec(\(w) {
+  data.table(world = worlds) %>%
+    rowwise() %>%
+    mutate(util = {
+      ec <- Q_equiv(Q, world)
       L0_i_list %>%
         imap_vec(\(dt, i) {
-          Q_equiv(Q, w) %>%
-            map_vec(\(v) dt[worlds == v, probs]) %>%
+          dt %>%
+            filter(world %in% ec) %>%
+            pull(prob) %>%
             sum() %>%
             {
               P_i(i) * log(.)
             }
         }) %>%
         sum()
-    })
-  data.table(worlds = worlds, utilities = utilities)
+    }) %>%
+    ungroup()
 }
 
 U1_gen("Qex", "NPsg")
 
 
 S1_gen <- function(Q, u) {
-  U1_dt <- U1_gen(Q, u)
-  probs <- worlds %>%
-    map_vec(\(w) exp(lambda * U1_dt[worlds == w, utilities]))
-  data.table(worlds = worlds, probs = probs) %>%
+  U1_gen(Q, u) %>%
+    transmute(world, prob = exp(lambda * util)) %>%
     normalize()
 }
 
 S1 <- function(w, Q, u) {
-  S1_gen(Q, u)[worlds == w, probs]
+  S1_gen(Q, u)[world == w, prob]
 }
 
 
@@ -395,16 +415,14 @@ Ln_gen <- function(n, Q, u) {
   if (n == 0) {
     L0_gen(Q, u)
   } else {
-    Sn_dt <- Sn_gen(n, Q, u)
-    probs <- worlds %>%
-      map_vec(\(w) P_w(w) * P_Q(Q) * Sn_dt[worlds == w, probs])
-    data.table(worlds = worlds, probs = probs) %>%
+    Sn_gen(n, Q, u) %>%
+      mutate(prob = Vectorize(P_w)(world) * P_Q(Q) * prob) %>%
       normalize()
   }
 }
 
 Ln <- function(w, n, Q, u) {
-  Ln_gen(n, Q, u)[worlds == w, probs]
+  Ln_gen(n, Q, u)[world == w, prob]
 }
 
 Un_gen <- function(n, Q, u) {
@@ -412,38 +430,38 @@ Un_gen <- function(n, Q, u) {
     U1_gen(Q, u)
   } else {
     Ln_dt <- Ln_gen(n - 1, Q, u)
-    utilities <- worlds %>%
-      map_vec(\(w) {
-        Q_equiv(Q, w) %>%
-          map_vec(\(v) Ln_dt[worlds == v, probs]) %>%
+    Ln_dt %>%
+      rowwise() %>%
+      transmute(world, util = {
+        ec <- Q_equiv(Q, world)
+        Ln_dt %>%
+          filter(world %in% ec) %>%
+          pull(prob) %>%
           sum() %>%
-          log() %>%
           {
-            . - cost(u)
+            log(.) - cost(u)
           }
-      })
-    data.table(worlds = worlds, utilities = utilities)
+      }) %>%
+      ungroup()
   }
 }
 
 Un <- function(w, n, Q, u) {
-  Un_gen(n, Q, u)[worlds == w, utilities]
+  Un_gen(n, Q, u)[world == w, util]
 }
 
 Sn_gen <- function(n, Q, u) {
   if (n == 1) {
     S1_gen(Q, u)
   } else {
-    Un_dt <- Un_gen(n, Q, u)
-    probs <- worlds %>%
-      map_vec(\(w) exp(lambda * Un_dt[worlds == w, utilities]))
-    data.table(worlds = worlds, probs = probs) %>%
+    Un_gen(n, Q, u) %>%
+      transmute(world, prob = exp(lambda * util)) %>%
       normalize()
   }
 }
 
 Sn <- function(w, n, Q, u) {
-  Sn_gen(n, Q, u)[worlds == w, probs]
+  Sn_gen(n, Q, u)[world == w, prob]
 }
 
 U1("w0", "Qex", "!1")
@@ -461,12 +479,6 @@ Ln("w2+", 1, "Qex", "NPsg")
 Sn_gen(2, "Qex", "NPsg")
 Sn("w0", 2, "Qex", "NPsg")
 
-for (q in QuDs) {
-  for (u in messages) {
-    cat(q, u, "\n")
-    print(Sn_gen(5, q, u))
-  }
-}
 # Sn_gen(5, "Qex", "NPsg")
 # Sn_gen(5, "Qfine", "NPsg")
 # Sn_gen(5, "Qml", "NPsg")
@@ -490,3 +502,18 @@ for (q in QuDs) {
 # Sn_gen(5, "Qex", "n!1")
 # Sn_gen(5, "Qfine", "n!1")
 # Sn_gen(5, "Qml", "n!1")
+
+# for (q in QuDs) {
+#   for (u in messages) {
+#     cat(q, u, "\n")
+#     print(Sn_gen(5, q, u))
+#   }
+# }
+
+QuDs %>% walk(\(q) {
+  messages %>% walk(\(u) {
+    cat(q, u, "\n")
+    print(Sn_gen(5, q, u))
+    cat("\n")
+  })
+})
