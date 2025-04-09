@@ -1,4 +1,35 @@
 options(pillar.sigfig = 7)
+
+worlds <- c("w0", "w1", "w2+")
+QuDs <- c("Qex", "Qml", "Qfine")
+messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
+
+
+# Equivalence relation: Q(w) -> set of worlds equivalent to w under Q
+Q_equiv <- function(Q, w) {
+  switch(Q,
+    Qex = switch(w,
+      "w0" = c("w0"),
+      "w1" = c("w1", "w2+"),
+      "w2+" = c("w1", "w2+"),
+      stop("Unknown QuD")
+    ),
+    Qml = switch(w,
+      "w0" = c("w0", "w1"),
+      "w1" = c("w0", "w1"),
+      "w2+" = c("w2+"),
+      stop("Unknown QuD")
+    ),
+    Qfine = switch(w,
+      "w0" = c("w0"),
+      "w1" = c("w1"),
+      "w2+" = c("w2+"),
+      stop("Unknown QuD")
+    ),
+    stop("Unknown QuD")
+  )
+}
+
 # Parameters and initial setup
 lambda <- 5 # Rationality parameter
 cost <- function(u) {
@@ -33,12 +64,7 @@ P_Q <- function(Q) {
 }
 
 P_i <- function(i) {
-  if (i %in% c(
-    "iLitLitLitLit", "iLitLitLitExh", "iLitLitExhLit", "iLitLitExhExh",
-    "iLitExhLitLit", "iLitExhLitExh", "iLitExhExhLit", "iLitExhExhExh",
-    "iExhLitLitLit", "iExhLitLitExh", "iExhLitExhLit", "iExhLitExhExh",
-    "iExhExhLitLit", "iExhExhLitExh", "iExhExhExhLit", "iExhExhExhExh"
-  )) {
+  if (i %in% i_names) {
     1 / 16
   } else {
     stop("Unknown interpretation")
@@ -99,169 +125,47 @@ in1 <- function(u, w) {
   1 - i1(u, w)
 }
 
-# Interpretation function: [[u]]_i(w) -> {0, 1}
-interpretations <- list(
-  iLitLitLitLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitLitLitExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitLitExhLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitLitExhExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitExhLitLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitExhLitExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitExhExhLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iLitExhExhExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Lit(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w),
-    )
-  },
-  iExhLitLitLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w),
-    )
-  },
-  iExhLitLitExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhLitExhLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhLitExhExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Lit(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhExhLitLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhExhLitExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Lit(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhExhExhLit = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Lit(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  },
-  iExhExhExhExh = function(u, w) {
-    switch(u,
-      "NPsg" = iSG_Exh(u, w),
-      "NPpl" = iPL_Exh(u, w),
-      "nNPsg" = inSG_Exh(u, w),
-      "nNPpl" = inPL_Exh(u, w),
-      "!1" = i1(u, w),
-      "n!1" = in1(u, w)
-    )
-  }
+ambi <- c("Lit", "Exh")
+interprs <- setNames(
+  list(
+    setNames(c(iSG_Lit, iSG_Exh), ambi),
+    setNames(c(iPL_Lit, iPL_Exh), ambi),
+    setNames(c(inSG_Lit, inSG_Exh), ambi),
+    setNames(c(inPL_Lit, inPL_Exh), ambi)
+  ),
+  messages[1:4]
 )
+
+# Interpretation function: [[u]]_i(w) -> {0, 1}
+
+interpretations <- expand.grid(
+  iNPsg = ambi,
+  iNPpl = ambi,
+  inNPsg = ambi,
+  inNPpl = ambi,
+  stringsAsFactors = FALSE
+) %>%
+  rmutate(
+    inter = {
+      inpsg <- iNPsg
+      inppl <- iNPpl
+      innpsg <- inNPsg
+      innppl <- inNPpl
+      list(function(u, w) {
+        switch(u,
+          "NPsg" = interprs[["NPsg"]][[inpsg]](u, w),
+          "NPpl" = interprs[["NPpl"]][[inppl]](u, w),
+          "nNPsg" = interprs[["nNPsg"]][[innpsg]](u, w),
+          "nNPpl" = interprs[["nNPpl"]][[innppl]](u, w),
+          "!1" = i1(u, w),
+          "n!1" = in1(u, w)
+        )
+      })
+    },
+    name = paste0("i", iNPsg, iNPpl, inNPsg, inNPpl)
+  ) %$%
+  setNames(inter, name) %T>% print()
+
 
 i_names <- names(interpretations)
 
@@ -286,35 +190,6 @@ interpret("n!1", "w1", interpretations[["iLitLitLitLit"]])
 interpret("n!1", "w2+", interpretations[["iLitLitLitLit"]])
 
 # Worlds, QuDs, messages
-worlds <- c("w0", "w1", "w2+")
-QuDs <- c("Qex", "Qml", "Qfine")
-messages <- c("NPpl", "NPsg", "nNPpl", "nNPsg", "!1", "n!1")
-
-
-# Equivalence relation: Q(w) -> set of worlds equivalent to w under Q
-Q_equiv <- function(Q, w) {
-  switch(Q,
-    Qex = switch(w,
-      "w0" = c("w0"),
-      "w1" = c("w1", "w2+"),
-      "w2+" = c("w1", "w2+"),
-      stop("Unknown QuD")
-    ),
-    Qml = switch(w,
-      "w0" = c("w0", "w1"),
-      "w1" = c("w0", "w1"),
-      "w2+" = c("w2+"),
-      stop("Unknown QuD")
-    ),
-    Qfine = switch(w,
-      "w0" = c("w0"),
-      "w1" = c("w1"),
-      "w2+" = c("w2+"),
-      stop("Unknown QuD")
-    ),
-    stop("Unknown QuD")
-  )
-}
 
 # library(comprehenr)
 library(data.table)
@@ -383,16 +258,8 @@ U1 <- function() {
       l0 %>%
         filter(world %in% ec & QuD == Q & message == u) %>%
         group_by(inter) %>%
-        summarise(per_i_util = {
-          prob %>%
-            {
-              P_i(inter[1]) * log(sum(.))
-            }
-        }) %>%
-        pull(per_i_util) %>%
-        {
-          sum(.) - cost(u)
-        }
+        summarise(per_i_util = P_i(inter[1]) * log(sum(prob))) %$%
+        sum(per_i_util) - cost(u)
     }) %>%
     arrange(world, QuD)
 }
@@ -435,11 +302,8 @@ Un <- function(n) {
         Q <- QuD
         u <- message
         ln_1 %>%
-          filter(world %in% ec & QuD == Q & message == u) %>%
-          pull(prob) %>%
-          {
-            log(sum(.)) - cost(u)
-          }
+          filter(world %in% ec & QuD == Q & message == u) %$%
+          log(sum(prob)) - cost(u)
       }) %>%
       arrange(world, QuD)
   }
@@ -456,3 +320,4 @@ Sn <- function(n) {
 Sn(3) %>% print(n = 54)
 
 Ln(3) %>% print(n = 54)
+Ln(1) %>% print(n = 54)

@@ -1,3 +1,166 @@
+interpretations <- list(
+  iLitLitLitLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitLitLitExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitLitExhLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitLitExhExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitExhLitLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitExhLitExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitExhExhLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iLitExhExhExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Lit(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w),
+    )
+  },
+  iExhLitLitLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w),
+    )
+  },
+  iExhLitLitExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhLitExhLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhLitExhExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Lit(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhExhLitLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhExhLitExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Lit(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhExhExhLit = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Lit(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  },
+  iExhExhExhExh = function(u, w) {
+    switch(u,
+      "NPsg" = iSG_Exh(u, w),
+      "NPpl" = iPL_Exh(u, w),
+      "nNPsg" = inSG_Exh(u, w),
+      "nNPpl" = inPL_Exh(u, w),
+      "!1" = i1(u, w),
+      "n!1" = in1(u, w)
+    )
+  }
+)
+
 normalize <- function(dt) {
   dt %>% mutate(prob = if (sum(prob) != 0) prob / sum(prob) else prob)
 }
