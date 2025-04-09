@@ -1,3 +1,4 @@
+options(pillar.sigfig = 7)
 # Parameters and initial setup
 lambda <- 5 # Rationality parameter
 cost <- function(u) {
@@ -262,13 +263,16 @@ interpretations <- list(
   }
 )
 
+i_names <- names(interpretations)
+
 interpret <- function(u, w, i) {
   i(u, w)
 }
 
 interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
 interpret("nNPsg", "w1", interpretations[["iLitLitLitLit"]])
-interpret("nNPsg", "w2+", interpretations[["iLitLitLitLit"]])
+interpret("NPsg", "w2+", interpretations[["iLitLitLitLit"]])
+interpret("NPpl", "w2+", interpretations[["iLitLitLitLit"]])
 
 interpret("nNPsg", "w0", interpretations[["iLitLitExhLit"]])
 interpret("nNPsg", "w1", interpretations[["iLitLitExhLit"]])
@@ -312,13 +316,12 @@ Q_equiv <- function(Q, w) {
   )
 }
 
-expand.grid(worlds, QuDs, messages)
-
 # library(comprehenr)
 library(data.table)
 library(tidyverse)
 library(magrittr)
 library(dplyr)
+
 
 rmutate <- function(data, ...) {
   data %>%
@@ -334,27 +337,32 @@ rtransmute <- function(data, ...) {
     ungroup()
 }
 
-normalize <- function(dt) {
-  dt %>% mutate(prob = if (sum(prob) != 0) prob / sum(prob) else prob)
-}
-
+# dt <- expand.grid(world = worlds, QuD = QuDs, message = messages, inter = i_names, stringsAsFactors = FALSE) %T>%
+#   print()
 # ==========================
 # Literal Listener (L0)
 # ==========================
 
-L0_gen <- function(Q, u, i) {
-  data.table(world = worlds) %>%
-    rmutate(prob = P_w(world) * P_Q(Q) * interpret(u, world, i)) %>%
-    normalize()
+L0 <- function() {
+  expand.grid(
+    world = worlds,
+    QuD = QuDs,
+    message = messages,
+    inter = i_names,
+    stringsAsFactors = FALSE
+  ) %>%
+    rmutate(prob = {
+      P_w(world) * P_Q(QuD) * interpretations[[inter]](message, world)
+    }) %>%
+    group_by(message, inter) %>%
+    mutate(prob = prob / sum(prob)) %>%
+    ungroup() %>%
+    arrange(message, inter)
 }
 
-L0_gen("Qfine", "NPsg", interpretations[["iLitLitLitLit"]])
-L0_gen("Qfine", "n!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qfine", "!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qex", "!1", interpretations[["iLitLitLitLit"]])
-L0_gen("Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+l0 <- L0() %T>% print(n = 54)
 
-L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
+
 
 # ==========================
 # Recursive Pragmatic Layers
@@ -362,96 +370,89 @@ L0("w0", "Qex", "nNPsg", interpretations[["iLitLitLitLit"]])
 lambda <- 5
 
 # Do rowwise mutate and ungroup
-
-U1_gen <- function(Q, u) {
-  L0_dt <- data.table(inter = names(interpretations)) %>%
-    rmutate(L0 = list(L0_gen(Q, u, interpretations[[inter]])))
-
-  data.table(world = worlds) %>%
+U1 <- function() {
+  l0 <- L0()
+  l0 %>%
+    group_by(world, QuD, message) %>%
+    summarise() %>%
+    ungroup() %>%
     rmutate(util = {
-      ec <- Q_equiv(Q, world)
-      L0_dt %>%
-        rmutate(L0 = L0 %>%
-          filter(world %in% ec) %>%
-          pull(prob) %>%
-          sum() %>%
-          {
-            P_i(inter) * log(.)
-          }) %>%
-        pull(L0) %>%
-        sum()
-    })
+      u <- message
+      ec <- Q_equiv(QuD, world)
+      Q <- QuD
+      l0 %>%
+        filter(world %in% ec & QuD == Q & message == u) %>%
+        group_by(inter) %>%
+        summarise(per_i_util = {
+          prob %>%
+            {
+              P_i(inter[1]) * log(sum(.))
+            }
+        }) %>%
+        pull(per_i_util) %>%
+        {
+          sum(.) - cost(u)
+        }
+    }) %>%
+    arrange(world, QuD)
 }
 
-U1_gen("Qex", "NPsg")
+u1 <- U1() %T>% print(n = 54)
 
 
-S1_gen <- function(Q, u) {
-  U1_gen(Q, u) %>%
-    transmute(world, prob = exp(lambda * util)) %>%
-    normalize()
+S1 <- function() {
+  U1() %>%
+    transmute(world, QuD, message, prob = exp(lambda * util)) %>%
+    group_by(world, QuD) %>%
+    mutate(prob = prob / sum(prob)) %>%
+    ungroup() %>%
+    arrange(world, QuD)
 }
 
+s1 <- S1() %T>% print(n = 54)
 
-Ln_gen <- function(n, Q, u) {
+Ln <- function(n) {
   if (n == 0) {
-    stop("n must be at least 1")
+    L0()
   } else {
-    Sn_gen(n, Q, u) %>%
-      mutate(prob = Vectorize(P_w)(world) * P_Q(Q) * prob) %>%
-      normalize()
+    Sn(n) %>%
+      rmutate(prob = P_w(world) * P_Q(QuD) * prob) %>%
+      group_by(message) %>%
+      mutate(prob = prob / sum(prob)) %>%
+      ungroup() %>%
+      arrange(message)
   }
 }
 
-Un_gen <- function(n, Q, u) {
+Un <- function(n) {
   if (n == 1) {
-    U1_gen(Q, u)
+    U1()
   } else {
-    Ln_dt <- Ln_gen(n - 1, Q, u)
-    Ln_dt %>%
-      rtransmute(world, util = {
-        ec <- Q_equiv(Q, world)
-        Ln_dt %>%
-          filter(world %in% ec) %>%
+    ln_1 <- Ln(n - 1)
+    ln_1 %>%
+      rmutate(util = {
+        ec <- Q_equiv(QuD, world)
+        Q <- QuD
+        u <- message
+        ln_1 %>%
+          filter(world %in% ec & QuD == Q & message == u) %>%
           pull(prob) %>%
-          sum() %>%
           {
-            log(.) - cost(u)
+            log(sum(.)) - cost(u)
           }
-      })
+      }) %>%
+      arrange(world, QuD)
   }
 }
 
-Sn_gen <- function(n, Q, u) {
-  if (n == 1) {
-    S1_gen(Q, u)
-  } else {
-    Un_gen(n, Q, u) %>%
-      transmute(world, prob = exp(lambda * util)) %>%
-      normalize()
-  }
+Sn <- function(n) {
+  Un(n) %>%
+    transmute(world, QuD, message, prob = exp(lambda * util)) %>%
+    group_by(world, QuD) %>%
+    mutate(prob = prob / sum(prob)) %>%
+    arrange(world, QuD)
 }
 
-U1("w0", "Qex", "!1")
-U1("w1", "Qex", "!1")
-U1("w2+", "Qex", "!1")
-U1_gen("Qex", "!1")
-S1_gen("Qex", "n!1")
-S1_gen("Qex", "!1")
-S1_gen("Qfine", "!1")
+Sn(3) %>% print(n = 54)
 
-S1("w0", "Qex", "nNPpl")
-Ln("w0", 1, "Qex", "NPsg")
-Ln("w1", 1, "Qex", "NPsg")
-Ln("w2+", 1, "Qex", "NPsg")
-Sn_gen(2, "Qex", "NPsg")
-Sn("w0", 2, "Qex", "NPsg")
-
-
-QuDs %>% walk(\(q) {
-  messages %>% walk(\(u) {
-    cat(q, u, "\n")
-    print(Sn_gen(5, q, u))
-    cat("\n")
-  })
-})
+Ln(3) %>% print(n = 54)
