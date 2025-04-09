@@ -1,21 +1,4 @@
 options(pillar.sigfig = 7)
-library(tidyverse)
-library(magrittr)
-library(dplyr)
-
-rmutate <- function(data, ...) {
-  data %>%
-    rowwise() %>%
-    mutate(...) %>%
-    ungroup()
-}
-
-rtransmute <- function(data, ...) {
-  data %>%
-    rowwise() %>%
-    transmute(...) %>%
-    ungroup()
-}
 
 worlds <- c("w0", "w1", "w2+")
 QuDs <- c("Qex", "Qml", "Qfine")
@@ -24,77 +7,62 @@ messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
 
 # Equivalence relation: Q(w) -> set of worlds equivalent to w under Q
 Q_equiv <- function(Q, w) {
-  switch(Q,
-    Qex = switch(w,
-      "w0" = c("w0"),
-      "w1" = c("w1", "w2+"),
-      "w2+" = c("w1", "w2+"),
-      stop("Unknown QuD")
-    ),
-    Qml = switch(w,
-      "w0" = c("w0", "w1"),
-      "w1" = c("w0", "w1"),
-      "w2+" = c("w2+"),
-      stop("Unknown QuD")
-    ),
-    Qfine = switch(w,
-      "w0" = c("w0"),
-      "w1" = c("w1"),
-      "w2+" = c("w2+"),
-      stop("Unknown QuD")
-    ),
-    stop("Unknown QuD")
+  case_when(
+    Q == "Qex" & w == "w0" ~ c("w0"),
+    Q == "Qex" & w == "w1" ~ c("w1", "w2+"),
+    Q == "Qex" & w == "w2+" ~ c("w1", "w2+"),
+    Q == "Qml" & w == "w0" ~ c("w0", "w1"),
+    Q == "Qml" & w == "w1" ~ c("w0", "w1"),
+    Q == "Qml" & w == "w2+" ~ c("w2+"),
+    Q == "Qfine" & w == "w0" ~ c("w0"),
+    Q == "Qfine" & w == "w1" ~ c("w1"),
+    Q == "Qfine" & w == "w2+" ~ c("w2+")
   )
 }
 
 # Parameters and initial setup
 lambda <- 5 # Rationality parameter
 cost <- function(u) {
-  switch(u,
-    NPpl = 0,
-    NPsg = 0,
-    nNPpl = 1.5,
-    nNPsg = 1.5,
-    "!1" = 2.5,
-    "n!1" = 4,
-    stop("Unknown message")
+  case_when(
+    u == "NPpl" ~ 0,
+    u == "NPsg" ~ 0,
+    u == "nNPpl" ~ 1.5,
+    u == "nNPsg" ~ 1.5,
+    u == "!1" ~ 2.5,
+    u == "n!1" ~ 4
   )
 }
 
 # Prior distributions over worlds and QuDs
 P_w <- function(w) {
-  switch(w,
-    "w0" = 1 / 3,
-    "w1" = 1 / 3,
-    "w2+" = 1 / 3,
-    stop("Unknown world")
+  case_when(
+    w == "w0" ~ 1 / 3,
+    w == "w1" ~ 1 / 3,
+    w == "w2+" ~ 1 / 3
   )
 }
-
+P_w(worlds)
 P_Q <- function(Q) {
-  switch(Q,
-    Qex = 0.8,
-    Qml = 0.1,
-    Qfine = 0.1,
-    stop("Unknown QuD")
+  case_when(
+    Q == "Qex" ~ 0.8,
+    Q == "Qml" ~ 0.1,
+    Q == "Qfine" ~ 0.1
   )
 }
 
 P_i <- function(i) {
-  if (i %in% i_names) {
-    1 / 16
-  } else {
-    stop("Unknown interpretation")
-  }
+  case_when(
+    i %in% i_names ~ 1 / 16
+  )
 }
 
 
 # Sub-interpretation function
 # Worlds: w0, w1, w2+
 iSG_Lit <- function(u, w) {
-  switch(w,
-    "w0" = 0,
-    1
+  case_when(
+    w == "w0" ~ 0,
+    TRUE ~ 1
   )
 }
 
@@ -104,9 +72,9 @@ inSG_Lit <- function(u, w) {
 
 
 iSG_Exh <- function(u, w) {
-  switch(w,
-    "w1" = 1,
-    0
+  case_when(
+    w == "w1" ~ 1,
+    TRUE ~ 0
   )
 }
 
@@ -124,9 +92,9 @@ inPL_Lit <- function(u, w) {
 }
 
 iPL_Exh <- function(u, w) {
-  switch(w,
-    "w2+" = 1,
-    0
+  case_when(
+    w == "w2+" ~ 1,
+    TRUE ~ 0
   )
 }
 
@@ -169,13 +137,13 @@ interpretations <- expand.grid(
       innpsg <- inNPsg
       innppl <- inNPpl
       list(function(u, w) {
-        switch(u,
-          "NPsg" = interprs[["NPsg"]][[inpsg]](u, w),
-          "NPpl" = interprs[["NPpl"]][[inppl]](u, w),
-          "nNPsg" = interprs[["nNPsg"]][[innpsg]](u, w),
-          "nNPpl" = interprs[["nNPpl"]][[innppl]](u, w),
-          "!1" = i1(u, w),
-          "n!1" = in1(u, w)
+        case_when(
+          u == "NPsg" ~ interprs[["NPsg"]][[inpsg]](u, w),
+          u == "NPpl" ~ interprs[["NPpl"]][[inppl]](u, w),
+          u == "nNPsg" ~ interprs[["nNPsg"]][[innpsg]](u, w),
+          u == "nNPpl" ~ interprs[["nNPpl"]][[innppl]](u, w),
+          u == "!1" ~ i1(u, w),
+          u == "n!1" ~ in1(u, w)
         )
       })
     },
@@ -185,9 +153,14 @@ interpretations <- expand.grid(
 
 
 i_names <- names(interpretations)
+interpretations[["iLitLitLitLit"]]
 
 interpret <- function(u, w, i) {
   i(u, w)
+}
+
+interpret <- function(messages, worlds, inters) {
+  pmap(list(messages, worlds, inters), \(u, w, i) interpretations[[i]](u, w))
 }
 
 interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
@@ -209,12 +182,25 @@ interpret("n!1", "w2+", interpretations[["iLitLitLitLit"]])
 # Worlds, QuDs, messages
 
 # library(comprehenr)
-# library(data.table)
-# library(tidyverse)
-# library(magrittr)
-# library(dplyr)
+library(data.table)
+library(tidyverse)
+library(magrittr)
+library(dplyr)
 
 
+rmutate <- function(data, ...) {
+  data %>%
+    rowwise() %>%
+    mutate(...) %>%
+    ungroup()
+}
+
+rtransmute <- function(data, ...) {
+  data %>%
+    rowwise() %>%
+    transmute(...) %>%
+    ungroup()
+}
 
 # dt <- expand.grid(world = worlds, QuD = QuDs, message = messages, inter = i_names, stringsAsFactors = FALSE) %T>%
 #   print()
@@ -230,8 +216,8 @@ L0 <- function() {
     inter = i_names,
     stringsAsFactors = FALSE
   ) %>%
-    rmutate(prob = {
-      P_w(world) * P_Q(QuD) * interpretations[[inter]](message, world)
+    mutate(prob = {
+      P_w(world) * P_Q(QuD) * interpret(message, world, inter)
     }) %>%
     group_by(message, inter) %>%
     mutate(prob = prob / sum(prob)) %>%
@@ -325,13 +311,3 @@ Sn(3) %>% print(n = 54)
 
 Ln(3) %>% print(n = 54)
 Ln(1) %>% print(n = 54)
-
-
-
-
-
-
-
-
-
-
