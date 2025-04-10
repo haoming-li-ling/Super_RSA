@@ -173,7 +173,8 @@ L0 <- function() {
     mutate(prob = P_w(world) * P_Q(QuD) * interpret(message, world, inter)) %>%
     group_by(message, inter) %>%
     mutate(prob = prob / sum(prob)) %>%
-    ungroup()
+    ungroup() %>%
+    arrange(message, inter)
 }
 
 U1 <- function() {
