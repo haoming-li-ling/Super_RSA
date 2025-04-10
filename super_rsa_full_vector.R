@@ -1,5 +1,24 @@
 options(pillar.sigfig = 7)
 
+# library(comprehenr)
+library(data.table)
+library(tidyverse)
+library(magrittr)
+library(dplyr)
+
+rmutate <- function(data, ...) {
+  data %>%
+    rowwise() %>%
+    mutate(...) %>%
+    ungroup()
+}
+
+rtransmute <- function(data, ...) {
+  data %>%
+    rowwise() %>%
+    transmute(...) %>%
+    ungroup()
+}
 worlds <- c("w0", "w1", "w2+")
 QuDs <- c("Qex", "Qml", "Qfine")
 messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
@@ -155,52 +174,18 @@ interpretations <- expand.grid(
 i_names <- names(interpretations)
 interpretations[["iLitLitLitLit"]]
 
-interpret <- function(u, w, i) {
-  i(u, w)
-}
+# interpret <- function(u, w, i) {
+#   i(u, w)
+# }
 
 interpret <- function(messages, worlds, inters) {
-  pmap(list(messages, worlds, inters), \(u, w, i) interpretations[[i]](u, w))
+  pmap_vec(list(messages, worlds, inters), \(u, w, i) interpretations[[i]](u, w))
 }
-
-interpret("nNPsg", "w0", interpretations[["iLitLitLitLit"]])
-interpret("nNPsg", "w1", interpretations[["iLitLitLitLit"]])
-interpret("NPsg", "w2+", interpretations[["iLitLitLitLit"]])
-interpret("NPpl", "w2+", interpretations[["iLitLitLitLit"]])
-
-interpret("nNPsg", "w0", interpretations[["iLitLitExhLit"]])
-interpret("nNPsg", "w1", interpretations[["iLitLitExhLit"]])
-interpret("nNPsg", "w2+", interpretations[["iLitLitExhLit"]])
-
-interpret("!1", "w0", interpretations[["iLitLitLitLit"]])
-interpret("!1", "w1", interpretations[["iLitLitLitLit"]])
-interpret("!1", "w2+", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w0", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w1", interpretations[["iLitLitLitLit"]])
-interpret("n!1", "w2+", interpretations[["iLitLitLitLit"]])
 
 # Worlds, QuDs, messages
 
-# library(comprehenr)
-library(data.table)
-library(tidyverse)
-library(magrittr)
-library(dplyr)
 
 
-rmutate <- function(data, ...) {
-  data %>%
-    rowwise() %>%
-    mutate(...) %>%
-    ungroup()
-}
-
-rtransmute <- function(data, ...) {
-  data %>%
-    rowwise() %>%
-    transmute(...) %>%
-    ungroup()
-}
 
 # dt <- expand.grid(world = worlds, QuD = QuDs, message = messages, inter = i_names, stringsAsFactors = FALSE) %T>%
 #   print()
@@ -273,7 +258,7 @@ Ln <- function(n) {
     L0()
   } else {
     Sn(n) %>%
-      rmutate(prob = P_w(world) * P_Q(QuD) * prob) %>%
+      mutate(prob = P_w(world) * P_Q(QuD) * prob) %>%
       group_by(message) %>%
       mutate(prob = prob / sum(prob)) %>%
       ungroup() %>%
