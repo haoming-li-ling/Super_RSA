@@ -28,7 +28,7 @@ Q_equiv <- function(Q, w) {
 # Parameters and initial setup
 cost <- function(u) {
   case_when(
-    u == "NPpl" ~ 0,
+    u == "NPpl" ~ 0.08,
     u == "NPsg" ~ 0,
     u == "nNPpl" ~ 1.5,
     u == "nNPsg" ~ 1.5,
@@ -48,9 +48,9 @@ P_w <- function(w) {
 
 P_Q <- function(Q) {
   case_when(
-    Q == "Qex" ~ 0.8,
-    Q == "Qml" ~ 0.1,
-    Q == "Qfine" ~ 0.1
+    Q == "Qex" ~  1/3,
+    Q == "Qml" ~ 1/3,
+    Q == "Qfine" ~ 1/3
   )
 }
 
@@ -223,8 +223,3 @@ Sn <- function(n) {
     arrange(world, QuD)
 }
 
-U1() %>% print(n = 54)
-Sn(3) %>% print(n = 54)
-
-Ln(3) %>% print(n = 54)
-Ln(1) %>% print(n = 54)
