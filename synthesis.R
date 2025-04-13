@@ -1,4 +1,5 @@
 options(pillar.sigfig = 4)
+options(dplyr.summarise.inform = FALSE)
 
 library(magrittr)
 library(dplyr)

@@ -1,7 +1,11 @@
-library(ggplot2)
+```{r}
+source("synthesis.R")
+```
 
-lambda <- 5 # Rationality parameter
 # Parameters and initial setup
+
+```{r}
+lambda <- 5 # Rationality parameter
 cost <- function(u) {
   case_when(
     u == "NPpl" ~ 0.0,
@@ -35,10 +39,11 @@ P_i <- function(i) {
     i %in% inters ~ 1 / 16
   )
 }
+```
 
-source("synthesis.R")
-u1 <- U1()
 
+```{r}
+library(ggplot2)
 custom_theme <- list(
   geom_col(alpha = .7),
   ylim(0, 1),
@@ -52,22 +57,29 @@ custom_theme <- list(
       panel.grid = element_blank()
     )
 )
+```
 
 # S(u|w,Q)
+```{r}
 Sn(1) %>%
   ggplot(aes(x = message, y = prob, fill = message)) +
   facet_grid(world ~ QuD) +
   custom_theme
+```
   
 # L(w,Q|u)
+
+```{r}
 Ln(1) %>%
   mutate(`QuD-world` = paste(QuD, world, sep = "-")) %>%
   ggplot(aes(x = `QuD-world`, y = prob, fill = `QuD-world`)) +
   facet_wrap(~ message) +
   custom_theme
-
+```
 
 # L(Q|u)
+
+```{r}
 Ln(1) %>%
   group_by(message, QuD) %>%
   summarise(AggQuD = sum(prob)) %>%
@@ -76,8 +88,11 @@ Ln(1) %>%
   ggplot(aes(x = QuD, y = AggQuD, fill = QuD)) +
   facet_wrap(~message) +
   custom_theme
+```
 
 # L(w|u)
+
+```{r}
 Ln(1) %>%
   group_by(message, world) %>%
   summarise(Aggworld = sum(prob)) %>%
@@ -86,8 +101,10 @@ Ln(1) %>%
   ggplot(aes(x = world, y = Aggworld, fill = world)) +
   facet_wrap(~message) +
   custom_theme
+```
 
 # S(u|w)
+```{r}
 Sn(2) %>%
   group_by(message, world) %>%
   summarise(Aggworld = sum(prob)) %>%
@@ -96,3 +113,4 @@ Sn(2) %>%
   ggplot(aes(x = message, y = Aggworld, fill = message)) +
   facet_grid(~world) +
   custom_theme
+```
