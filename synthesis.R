@@ -6,6 +6,45 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 
+costp <- function(
+    NPpl = 0,
+    NPsg = 0,
+    nNPpl = 1.5,
+    nNPsg = 1.5,
+    `!1` = 2.5,
+    `n!1` = 4) {
+  function(u) {
+    case_when(
+      u == "NPpl" ~ NPpl,
+      u == "NPsg" ~ NPsg,
+      u == "nNPpl" ~ nNPpl,
+      u == "nNPsg" ~ nNPsg,
+      u == "!1" ~ `!1`,
+      u == "n!1" ~ `n!1`
+    )
+  }
+}
+
+P_wp <- function(w0 = 1 / 3, w1 = 1 / 3, `w2+` = 1 / 3) {
+  function(w) {
+    case_when(
+      w == "w0" ~ w0,
+      w == "w1" ~ w1,
+      w == "w2+" ~ `w2+`
+    )
+  }
+}
+
+P_Qp <- function(Qex = 1 / 3, Qml = 1 / 3, Qfine = 1 / 3) {
+  name <- function(Q) {
+    case_when(
+      Q == "Qex" ~ Qex,
+      Q == "Qml" ~ Qml,
+      Q == "Qfine" ~ Qfine
+    )
+  }
+}
+
 worlds <- c("w0", "w1", "w2+")
 QuDs <- c("Qex", "Qml", "Qfine")
 messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
@@ -189,3 +228,18 @@ Sn <- function(n) {
     arrange(world, QuD)
 }
 
+
+library(ggplot2)
+custom_theme <- list(
+  geom_col(alpha = .7),
+  ylim(0, 1),
+  theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.line.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.ticks.x = element_blank(),
+      panel.grid = element_blank()
+    )
+)

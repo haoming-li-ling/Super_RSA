@@ -1,3 +1,12 @@
+---
+knitr:
+  opts_chunk:
+    dev: svglite
+format:
+  typst:
+    keep-typst: true
+---
+
 ```{r}
 source("synthesis.R")
 ```
@@ -6,34 +15,9 @@ source("synthesis.R")
 
 ```{r}
 lambda <- 5 # Rationality parameter
-cost <- function(u) {
-  case_when(
-    u == "NPpl" ~ 0.0,
-    u == "NPsg" ~ 0,
-    u == "nNPpl" ~ 1.5,
-    u == "nNPsg" ~ 1.5,
-    u == "!1" ~ 2.5,
-    u == "n!1" ~ 4
-  )
-}
-
-# Prior distributions over worlds and QuDs
-P_w <- function(w) {
-  case_when(
-    w == "w0" ~ 0.49,
-    w == "w1" ~ 0.02,
-    w == "w2+" ~ 0.49
-  )
-}
-
-P_Q <- function(Q) {
-  case_when(
-    Q == "Qex" ~ 0.96,
-    Q == "Qml" ~ 0.02,
-    Q == "Qfine" ~ 0.02
-  )
-}
-
+cost <- costp()
+P_w <- P_wp(w0 = 0.49, w1 = 0.02, `w2+` = 0.49)
+P_Q <- P_Qp(Qex = 0.96, Qml = 0.02, Qfine = 0.02)
 P_i <- function(i) {
   case_when(
     i %in% inters ~ 1 / 16
@@ -41,33 +25,16 @@ P_i <- function(i) {
 }
 ```
 
+# S(u\|w,Q)
 
-```{r}
-library(ggplot2)
-custom_theme <- list(
-  geom_col(alpha = .7),
-  ylim(0, 1),
-  theme_bw() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      axis.line.y = element_blank(),
-      axis.title.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.ticks.x = element_blank(),
-      panel.grid = element_blank()
-    )
-)
-```
-
-# S(u|w,Q)
 ```{r}
 Sn(1) %>%
   ggplot(aes(x = message, y = prob, fill = message)) +
   facet_grid(world ~ QuD) +
   custom_theme
 ```
-  
-# L(w,Q|u)
+
+# L(w,Q\|u)
 
 ```{r}
 Ln(1) %>%
@@ -77,7 +44,7 @@ Ln(1) %>%
   custom_theme
 ```
 
-# L(Q|u)
+# L(Q\|u)
 
 ```{r}
 Ln(1) %>%
@@ -90,7 +57,7 @@ Ln(1) %>%
   custom_theme
 ```
 
-# L(w|u)
+# L(w\|u)
 
 ```{r}
 Ln(1) %>%
@@ -103,7 +70,8 @@ Ln(1) %>%
   custom_theme
 ```
 
-# S(u|w)
+# S(u\|w)
+
 ```{r}
 Sn(2) %>%
   group_by(message, world) %>%
