@@ -1,13 +1,45 @@
-source("synthesis.R")
 library(ggplot2)
 
+lambda <- 5 # Rationality parameter
+# Parameters and initial setup
+cost <- function(u) {
+  case_when(
+    u == "NPpl" ~ 0.0,
+    u == "NPsg" ~ 0,
+    u == "nNPpl" ~ 1.5,
+    u == "nNPsg" ~ 1.5,
+    u == "!1" ~ 2.5,
+    u == "n!1" ~ 4
+  )
+}
+
+# Prior distributions over worlds and QuDs
+P_w <- function(w) {
+  case_when(
+    w == "w0" ~ 0.49,
+    w == "w1" ~ 0.02,
+    w == "w2+" ~ 0.49
+  )
+}
+
+P_Q <- function(Q) {
+  case_when(
+    Q == "Qex" ~ 0.96,
+    Q == "Qml" ~ 0.02,
+    Q == "Qfine" ~ 0.02
+  )
+}
+
+P_i <- function(i) {
+  case_when(
+    i %in% inters ~ 1 / 16
+  )
+}
+
+source("synthesis.R")
 u1 <- U1()
-s3 <- Sn(3)
-s3 %>%
-  ggplot(aes(x = message, y = prob, fill = message)) +
-  geom_col(alpha = .7) +
-  facet_grid(world ~ QuD) +
-  theme_bw() +
+
+custom_theme <- theme_bw() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     axis.line.y = element_blank(),
@@ -17,3 +49,37 @@ s3 %>%
     panel.grid = element_blank()
   )
 
+s3 <- Sn(3)
+s3 %>%
+  ggplot(aes(x = message, y = prob, fill = message)) +
+  geom_col(alpha = .7) +
+  facet_grid(world ~ QuD) +
+  custom_theme
+  
+
+l3 <- Ln(3)
+Ln(3) %>%
+  mutate(`QuD-world` = paste(QuD, world, sep = "-")) %>%
+  ggplot(aes(x = `QuD-world`, y = prob, fill = `QuD-world`)) +
+  geom_col(alpha = .7) +
+  facet_wrap(~ message) +
+  custom_theme
+  
+l3 %>%
+  group_by(message, QuD) %>%
+  summarise(AggQuD = sum(prob)) %>%
+  ggplot(aes(x = QuD, y = AggQuD, fill = message)) +
+  geom_col(alpha = .7) +
+  ylim(0, 1) +
+  facet_wrap(~message) +
+  custom_theme
+
+Sn(1) %>%
+  group_by(message, world) %>%
+  summarise(Aggworld = sum(prob)) %>%
+  group_by(world) %>%
+  mutate(Aggworld = Aggworld / sum(Aggworld)) %>%
+  ggplot(aes(x = message, y = Aggworld, fill = world)) +
+  geom_col(alpha = .7) +
+  facet_grid(~world) +
+  custom_theme

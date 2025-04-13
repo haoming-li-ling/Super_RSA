@@ -8,7 +8,6 @@ library(purrr)
 worlds <- c("w0", "w1", "w2+")
 QuDs <- c("Qex", "Qml", "Qfine")
 messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
-lambda <- 5 # Rationality parameter
 
 # Equivalence relation: Q(w) -> set of worlds equivalent to w under Q
 Q_equiv <- function(Q, w) {
@@ -25,34 +24,6 @@ Q_equiv <- function(Q, w) {
   )
 }
 
-# Parameters and initial setup
-cost <- function(u) {
-  case_when(
-    u == "NPpl" ~ 0.08,
-    u == "NPsg" ~ 0,
-    u == "nNPpl" ~ 1.5,
-    u == "nNPsg" ~ 1.5,
-    u == "!1" ~ 2.5,
-    u == "n!1" ~ 4
-  )
-}
-
-# Prior distributions over worlds and QuDs
-P_w <- function(w) {
-  case_when(
-    w == "w0" ~ 1 / 3,
-    w == "w1" ~ 1 / 3,
-    w == "w2+" ~ 1 / 3
-  )
-}
-
-P_Q <- function(Q) {
-  case_when(
-    Q == "Qex" ~  1/3,
-    Q == "Qml" ~ 1/3,
-    Q == "Qfine" ~ 1/3
-  )
-}
 
 # Sub-interpretation function
 # Worlds: w0, w1, w2+
@@ -151,12 +122,6 @@ interpretations <- expand_grid(
 
 
 inters <- names(interpretations)
-
-P_i <- function(i) {
-  case_when(
-    i %in% inters ~ 1 / 16
-  )
-}
 
 interpret <- function(ms, ws, is) {
   pmap_vec(list(ms, ws, is), \(u, w, i) interpretations[[i]](u, w))
