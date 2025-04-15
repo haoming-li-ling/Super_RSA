@@ -5,7 +5,6 @@ library(magrittr)
 library(dplyr)
 library(tidyr)
 library(purrr)
-library(stringr)
 
 costp <- function(
     NPpl = 0,
@@ -26,46 +25,22 @@ costp <- function(
   }
 }
 
-P_wp <- function(w0 = 1, w1 = 1, `w2+` = 1) {
-  total <- w0 + w1 + `w2+`
-  norm_w0 <- w0 / total
-  norm_w1 <- w1 / total
-  `norm_w2+` <- `w2+` / total
+P_wp <- function(w0 = 1 / 3, w1 = 1 / 3, `w2+` = 1 / 3) {
   function(w) {
     case_when(
-      w == "w0" ~ norm_w0,
-      w == "w1" ~ norm_w1,
-      w == "w2+" ~ `norm_w2+`
+      w == "w0" ~ w0,
+      w == "w1" ~ w1,
+      w == "w2+" ~ `w2+`
     )
   }
 }
 
-P_Qp <- function(Qex = 1, Qml = 1, Qfine = 1) {
-  total <- Qex + Qml + Qfine
-  norm_Qex <- Qex / total
-  norm_Qml <- Qml / total
-  norm_Qfine <- Qfine / total
+P_Qp <- function(Qex = 1 / 3, Qml = 1 / 3, Qfine = 1 / 3) {
   name <- function(Q) {
     case_when(
-      Q == "Qex" ~ norm_Qex,
-      Q == "Qml" ~ norm_Qml,
-      Q == "Qfine" ~ norm_Qfine
-    )
-  }
-}
-
-P_ip <- function(ExhExh = 1, ExhLit = 1, LitLit = 1) {
-  total <- ExhExh * 4 + ExhLit * 8 + LitLit * 4
-  norm_ExhExh <- ExhExh / total
-  norm_ExhLit <- ExhLit / total
-  norm_LitLit <- LitLit / total
-  function(i) {
-    # format: iExhExhExhExh, negative sentence spec is 7-13
-    num_exh <- substr(i, 7, 13) %>% str_count("Exh")
-    case_when(
-      num_exh == 1 ~ norm_ExhLit,
-      num_exh == 2 ~ norm_ExhExh,
-      num_exh == 0 ~ norm_LitLit
+      Q == "Qex" ~ Qex,
+      Q == "Qml" ~ Qml,
+      Q == "Qfine" ~ Qfine
     )
   }
 }
@@ -268,41 +243,3 @@ custom_theme <- list(
       panel.grid = element_blank()
     )
 )
-
-check_Ln <- function(n) {
-  Ln(n) %>%
-    mutate(`QuD-world` = paste(QuD, world, sep = "-")) %>%
-    ggplot(aes(x = `QuD-world`, y = prob, fill = `QuD-world`)) +
-    facet_wrap(~message) +
-    custom_theme
-}
-
-check_Sn <- function(n) {
-  Sn(n) %>%
-    ggplot(aes(x = message, y = prob, fill = message)) +
-    facet_grid(world ~ QuD) +
-    custom_theme
-}
-
-check_Ln_w <- function(n) {
-  Ln(n) %>%
-    group_by(message, world) %>%
-    summarise(Aggworld = sum(prob)) %>%
-    group_by(message) %>%
-    mutate(Aggworld = Aggworld / sum(Aggworld)) %>%
-    ggplot(aes(x = world, y = Aggworld, fill = world)) +
-    facet_wrap(~message) +
-    custom_theme
-}
-
-check_Sn_w <- function(n) {
-  Sn(n) %>%
-    group_by(message, world) %>%
-    summarise(Aggworld = sum(prob)) %>%
-    group_by(world) %>%
-    mutate(Aggworld = Aggworld / sum(Aggworld)) %>%
-    ggplot(aes(x = message, y = Aggworld, fill = message)) +
-    facet_grid(~world) +
-    custom_theme
-}
-

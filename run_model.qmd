@@ -8,6 +8,7 @@ format:
 ---
 
 ```{r}
+#| output: false
 source("synthesis.R")
 ```
 
@@ -15,70 +16,70 @@ source("synthesis.R")
 
 ```{r}
 lambda <- 5 # Rationality parameter
-cost <- costp()
-P_w <- P_wp(w0 = 0.49, w1 = 0.02, `w2+` = 0.49)
-P_Q <- P_Qp(Qex = 0.96, Qml = 0.02, Qfine = 0.02)
-P_i <- function(i) {
-  case_when(
-    i %in% inters ~ 1 / 16
-  )
-}
+n <- 3
+
+cost_orig <- costp()
+cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1)
+cost <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1)
+
+P_w_flat <- P_wp()
+P_w_sg_odd <- P_wp(w1 = 1 / 10)
+P_w_pl_odd <- P_wp(`w2+` = 1 / 10)
+P_w_sg_odd_extreme <- P_wp(w1 = 1 / 1000)
+P_w_pl_odd_extreme <- P_wp(`w2+` = 1 / 1000)
+
+P_Q_flat <- P_Qp()
+P_Q_Qml <- P_Qp(Qml = 10)
+P_Q_Qex <- P_Qp(Qex = 10)
+P_Q_Qfine <- P_Qp(Qfine = 10)
+
+P_i_flat <- P_ip()
+P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.4, LitLit = 2)
+P_i <- P_i_penalize_embedded
 ```
 
-# S(u\|w,Q)
+# Flat world and QuD priors
 
 ```{r}
-Sn(1) %>%
-  ggplot(aes(x = message, y = prob, fill = message)) +
-  facet_grid(world ~ QuD) +
-  custom_theme
+P_w <- P_w_flat
+P_Q <- P_Q_flat
+
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
 ```
 
-# L(w,Q\|u)
+# Flat world priors, Qex bias
 
 ```{r}
-Ln(1) %>%
-  mutate(`QuD-world` = paste(QuD, world, sep = "-")) %>%
-  ggplot(aes(x = `QuD-world`, y = prob, fill = `QuD-world`)) +
-  facet_wrap(~ message) +
-  custom_theme
+P_w <- P_w_flat
+P_Q <- P_Q_Qex
+
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
 ```
 
-# L(Q\|u)
+# Flat world priors, Qml bias
 
 ```{r}
-Ln(1) %>%
-  group_by(message, QuD) %>%
-  summarise(AggQuD = sum(prob)) %>%
-  group_by(message) %>%
-  mutate(AggQuD = AggQuD / sum(AggQuD)) %>%
-  ggplot(aes(x = QuD, y = AggQuD, fill = QuD)) +
-  facet_wrap(~message) +
-  custom_theme
+P_w <- P_w_flat
+P_Q <- P_Q_Qml
+
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
+# check_Sn_w(2)
 ```
 
-# L(w\|u)
+# nNPsg oddness (w1 biased against, Qex bias)
 
 ```{r}
-Ln(1) %>%
-  group_by(message, world) %>%
-  summarise(Aggworld = sum(prob)) %>%
-  group_by(message) %>%
-  mutate(Aggworld = Aggworld / sum(Aggworld)) %>%
-  ggplot(aes(x = world, y = Aggworld, fill = world)) +
-  facet_wrap(~message) +
-  custom_theme
+P_w <- P_w_sg_odd
+P_Q <- P_Q_Qex
+
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
 ```
 
-# S(u\|w)
-
-```{r}
-Sn(2) %>%
-  group_by(message, world) %>%
-  summarise(Aggworld = sum(prob)) %>%
-  group_by(world) %>%
-  mutate(Aggworld = Aggworld / sum(Aggworld)) %>%
-  ggplot(aes(x = message, y = Aggworld, fill = message)) +
-  facet_grid(~world) +
-  custom_theme
-```
