@@ -9,18 +9,23 @@ format:
 
 ```{r}
 #| output: false
-source("synthesis.R")
+
+source("synthesis_maximin.R")
+# source("synthesis.R")
 ```
 
 # Parameters and initial setup
 
 ```{r}
 lambda <- 5 # Rationality parameter
-n <- 3
+n <- 1
 
 cost_orig <- costp()
-cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1)
-cost <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1)
+cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `n!1` = 2.6)
+cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1, `+2` = 0.9, `n+2` = 1)
+# cost <- cost_neg_cheap
+cost <- cost_neg_exa_cheap
+# cost <- cost_orig
 
 P_w_flat <- P_wp()
 P_w_sg_odd <- P_wp(w1 = 1 / 10)
@@ -34,8 +39,12 @@ P_Q_Qex <- P_Qp(Qex = 10)
 P_Q_Qfine <- P_Qp(Qfine = 10)
 
 P_i_flat <- P_ip()
-P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.4, LitLit = 2)
-P_i <- P_i_penalize_embedded
+P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.1, LitLit = 1.21)
+# P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.4, LitLit = 2)
+# P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 3, LitLit = 9)
+# P_i <- P_i_penalize_embedded
+P_i <- P_i_flat
+P_i("iLitLitLitLit")
 ```
 
 # Flat world and QuD priors
@@ -48,6 +57,8 @@ check_Sn(n)
 check_Ln(n)
 check_Ln_w(n)
 ```
+
+
 
 # Flat world priors, Qex bias
 
@@ -78,6 +89,15 @@ check_Ln_w(n)
 P_w <- P_w_sg_odd
 P_Q <- P_Q_Qex
 
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
+```
+# nNPpl oddness (w2+ biased againt, Qex bias)
+```{r}
+P_w <- P_w_pl_odd
+P_Q <- P_Q_Qex
+L0() %>% filter(QuD == "Qml" & world == "w0")
 check_Sn(n)
 check_Ln(n)
 check_Ln_w(n)

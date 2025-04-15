@@ -60,9 +60,9 @@ messages <- c(
   "nNPsg", 
   "nNPpl", 
   "!1", 
-  "n!1", 
-  "+2", 
-  "n+2"
+  "n!1" 
+  # "+2", 
+  # "n+2"
 )
 costp <- function(
     NPpl = 0,
@@ -80,9 +80,9 @@ costp <- function(
       u == "nNPpl" ~ nNPpl,
       u == "nNPsg" ~ nNPsg,
       u == "!1" ~ `!1`,
-      u == "n!1" ~ `n!1`,
-      u == "+2" ~ `+2`,
-      u == "n+2" ~ `n+2`
+      u == "n!1" ~ `n!1`
+      # u == "+2" ~ `+2`,
+      # u == "n+2" ~ `n+2`
     )
   }
 }
@@ -183,9 +183,9 @@ interpretations <- expand_grid(
           u == "nNPsg" ~ interprs[["nNPsg"]][[innpsg]](w),
           u == "nNPpl" ~ interprs[["nNPpl"]][[innppl]](w),
           u == "!1" ~ i1(w),
-          u == "n!1" ~ in1(w), 
-          u == "+2" ~ i2(w),
-          u == "n+2" ~ in2(w)
+          u == "n!1" ~ in1(w) 
+          # u == "+2" ~ i2(w),
+          # u == "n+2" ~ in2(w)
         )
       })
     }
