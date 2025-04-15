@@ -60,9 +60,10 @@ messages <- c(
   "nNPsg", 
   "nNPpl", 
   "!1", 
-  "n!1" 
-  # "+2", 
-  # "n+2"
+  "n!1",
+  "+2",
+  "n+2",
+  "null"
 )
 costp <- function(
     NPpl = 0,
@@ -72,7 +73,8 @@ costp <- function(
     `!1` = 2.5,
     `n!1` = 4,
     `+2` = 2.5,
-    `n+2` = 4) {
+    `n+2` = 4,
+    `null` = -1) {
   function(u) {
     case_when(
       u == "NPpl" ~ NPpl,
@@ -80,9 +82,10 @@ costp <- function(
       u == "nNPpl" ~ nNPpl,
       u == "nNPsg" ~ nNPsg,
       u == "!1" ~ `!1`,
-      u == "n!1" ~ `n!1`
-      # u == "+2" ~ `+2`,
-      # u == "n+2" ~ `n+2`
+      u == "n!1" ~ `n!1`,
+      u == "+2" ~ `+2`,
+      u == "n+2" ~ `n+2`,
+      u == "null" ~ `null`
     )
   }
 }
@@ -149,6 +152,10 @@ in2 <- function(w) {
   1 - i2(w)
 }
 
+inull <- function(w) {
+  1
+}
+
 LitExh <- c("Lit", "Exh")
 interprs <- setNames(
   list(
@@ -183,9 +190,10 @@ interpretations <- expand_grid(
           u == "nNPsg" ~ interprs[["nNPsg"]][[innpsg]](w),
           u == "nNPpl" ~ interprs[["nNPpl"]][[innppl]](w),
           u == "!1" ~ i1(w),
-          u == "n!1" ~ in1(w) 
-          # u == "+2" ~ i2(w),
-          # u == "n+2" ~ in2(w)
+          u == "n!1" ~ in1(w),
+          u == "+2" ~ i2(w),
+          u == "n+2" ~ in2(w),
+          u == "null" ~ inull(w)
         )
       })
     }
@@ -307,6 +315,13 @@ check_Sn <- function(n) {
     facet_grid(world ~ QuD) +
     custom_theme
 }
+
+# check_Un <- function(n) {
+#   Un(n) %>% 
+#     ggplot(aes(x = message, y = util, fill = message)) +
+#     facet_grid(world ~ QuD) +
+#     custom_theme
+# }
 
 check_Ln_w <- function(n) {
   Ln(n) %>%

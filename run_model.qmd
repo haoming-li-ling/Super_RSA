@@ -17,12 +17,14 @@ source("synthesis_maximin.R")
 # Parameters and initial setup
 
 ```{r}
-lambda <- 5 # Rationality parameter
-n <- 1
+lambda <- 2 # Rationality parameter
+n <- 2
 
 cost_orig <- costp()
 cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `n!1` = 2.6)
-cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1, `+2` = 0.9, `n+2` = 1)
+cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1, `+2` = 0.9, `n+2` = 1, `null` = -0.1)
+# cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1)
+# cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 100, `n!1` = 100)
 # cost <- cost_neg_cheap
 cost <- cost_neg_exa_cheap
 # cost <- cost_orig
@@ -71,6 +73,10 @@ check_Ln(n)
 check_Ln_w(n)
 ```
 
+
+
+
+
 # Flat world priors, Qml bias
 
 ```{r}
@@ -89,15 +95,17 @@ check_Ln_w(n)
 P_w <- P_w_sg_odd
 P_Q <- P_Q_Qex
 
+check_Sn(n - 1)
+check_Ln(n - 1)
+check_Ln_w(n - 1)
 check_Sn(n)
-check_Ln(n)
+check_Un(n)
 check_Ln_w(n)
 ```
 # nNPpl oddness (w2+ biased againt, Qex bias)
 ```{r}
 P_w <- P_w_pl_odd
 P_Q <- P_Q_Qex
-L0() %>% filter(QuD == "Qml" & world == "w0")
 check_Sn(n)
 check_Ln(n)
 check_Ln_w(n)
