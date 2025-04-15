@@ -7,25 +7,8 @@ library(tidyr)
 library(purrr)
 library(stringr)
 
-costp <- function(
-    NPpl = 0,
-    NPsg = 0,
-    nNPpl = 1.5,
-    nNPsg = 1.5,
-    `!1` = 2.5,
-    `n!1` = 4) {
-  function(u) {
-    case_when(
-      u == "NPpl" ~ NPpl,
-      u == "NPsg" ~ NPsg,
-      u == "nNPpl" ~ nNPpl,
-      u == "nNPsg" ~ nNPsg,
-      u == "!1" ~ `!1`,
-      u == "n!1" ~ `n!1`
-    )
-  }
-}
-
+# Worlds and priors
+worlds <- c("w0", "w1", "w2+")
 P_wp <- function(w0 = 1, w1 = 1, `w2+` = 1) {
   total <- w0 + w1 + `w2+`
   norm_w0 <- w0 / total
@@ -40,6 +23,21 @@ P_wp <- function(w0 = 1, w1 = 1, `w2+` = 1) {
   }
 }
 
+# QuDs and priors
+QuDs <- c("Qex", "Qml", "Qfine")
+Q_equiv <- function(Q, w) {
+  case_when(
+    Q == "Qex" & w == "w0" ~ list(c("w0")),
+    Q == "Qex" & w == "w1" ~ list(c("w1", "w2+")),
+    Q == "Qex" & w == "w2+" ~ list(c("w1", "w2+")),
+    Q == "Qml" & w == "w0" ~ list(c("w0", "w1")),
+    Q == "Qml" & w == "w1" ~ list(c("w0", "w1")),
+    Q == "Qml" & w == "w2+" ~ list(c("w2+")),
+    Q == "Qfine" & w == "w0" ~ list(c("w0")),
+    Q == "Qfine" & w == "w1" ~ list(c("w1")),
+    Q == "Qfine" & w == "w2+" ~ list(c("w2+"))
+  )
+}
 P_Qp <- function(Qex = 1, Qml = 1, Qfine = 1) {
   total <- Qex + Qml + Qfine
   norm_Qex <- Qex / total
@@ -54,39 +52,39 @@ P_Qp <- function(Qex = 1, Qml = 1, Qfine = 1) {
   }
 }
 
-P_ip <- function(ExhExh = 1, ExhLit = 1, LitLit = 1) {
-  total <- ExhExh * 4 + ExhLit * 8 + LitLit * 4
-  norm_ExhExh <- ExhExh / total
-  norm_ExhLit <- ExhLit / total
-  norm_LitLit <- LitLit / total
-  function(i) {
-    # format: iExhExhExhExh, negative sentence spec is 7-13
-    num_exh <- substr(i, 7, 13) %>% str_count("Exh")
+# Messages and costs
+# messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
+messages <- c(
+  "NPsg", 
+  "NPpl", 
+  "nNPsg", 
+  "nNPpl", 
+  "!1", 
+  "n!1", 
+  "+2", 
+  "n+2"
+)
+costp <- function(
+    NPpl = 0,
+    NPsg = 0,
+    nNPpl = 1.5,
+    nNPsg = 1.5,
+    `!1` = 2.5,
+    `n!1` = 4,
+    `+2` = 2.5,
+    `n+2` = 4) {
+  function(u) {
     case_when(
-      num_exh == 1 ~ norm_ExhLit,
-      num_exh == 2 ~ norm_ExhExh,
-      num_exh == 0 ~ norm_LitLit
+      u == "NPpl" ~ NPpl,
+      u == "NPsg" ~ NPsg,
+      u == "nNPpl" ~ nNPpl,
+      u == "nNPsg" ~ nNPsg,
+      u == "!1" ~ `!1`,
+      u == "n!1" ~ `n!1`,
+      u == "+2" ~ `+2`,
+      u == "n+2" ~ `n+2`
     )
   }
-}
-
-worlds <- c("w0", "w1", "w2+")
-QuDs <- c("Qex", "Qml", "Qfine")
-messages <- c("NPsg", "NPpl", "nNPsg", "nNPpl", "!1", "n!1")
-
-# Equivalence relation: Q(w) -> set of worlds equivalent to w under Q
-Q_equiv <- function(Q, w) {
-  case_when(
-    Q == "Qex" & w == "w0" ~ list(c("w0")),
-    Q == "Qex" & w == "w1" ~ list(c("w1", "w2+")),
-    Q == "Qex" & w == "w2+" ~ list(c("w1", "w2+")),
-    Q == "Qml" & w == "w0" ~ list(c("w0", "w1")),
-    Q == "Qml" & w == "w1" ~ list(c("w0", "w1")),
-    Q == "Qml" & w == "w2+" ~ list(c("w2+")),
-    Q == "Qfine" & w == "w0" ~ list(c("w0")),
-    Q == "Qfine" & w == "w1" ~ list(c("w1")),
-    Q == "Qfine" & w == "w2+" ~ list(c("w2+"))
-  )
 }
 
 
@@ -143,6 +141,14 @@ in1 <- function(w) {
   1 - i1(w)
 }
 
+i2 <- function(w) {
+  iPL_Exh(w)
+}
+
+in2 <- function(w) {
+  1 - i2(w)
+}
+
 LitExh <- c("Lit", "Exh")
 interprs <- setNames(
   list(
@@ -161,7 +167,6 @@ interpretations <- expand_grid(
   iNPpl = LitExh,
   inNPsg = LitExh,
   inNPpl = LitExh,
-  stringsAsFactors = FALSE
 ) %>%
   rowwise() %>%
   mutate(
@@ -178,7 +183,9 @@ interpretations <- expand_grid(
           u == "nNPsg" ~ interprs[["nNPsg"]][[innpsg]](w),
           u == "nNPpl" ~ interprs[["nNPpl"]][[innppl]](w),
           u == "!1" ~ i1(w),
-          u == "n!1" ~ in1(w)
+          u == "n!1" ~ in1(w), 
+          u == "+2" ~ i2(w),
+          u == "n+2" ~ in2(w)
         )
       })
     }
@@ -192,13 +199,30 @@ interpret <- function(ms, ws, is) {
   pmap_vec(list(ms, ws, is), \(u, w, i) interpretations[[i]](u, w))
 }
 
+P_ip <- function(ExhExh = 1, ExhLit = 1, LitLit = 1) {
+  total <- ExhExh * 4 + ExhLit * 8 + LitLit * 4
+  norm_ExhExh <- ExhExh / total
+  norm_ExhLit <- ExhLit / total
+  norm_LitLit <- LitLit / total
+  function(i) {
+    # format: iExhExhExhExh, negative sentence spec is 7-13
+    num_exh <- substr(i, 8, 13) %>% str_count("Exh")
+    case_when(
+      num_exh == 1 ~ norm_ExhLit,
+      num_exh == 2 ~ norm_ExhExh,
+      num_exh == 0 ~ norm_LitLit
+    )
+  }
+}
+
+
+# Model functions
 L0 <- function() {
   expand_grid(
     world = worlds,
     QuD = QuDs,
     message = messages,
     inter = inters,
-    stringsAsFactors = FALSE
   ) %>%
     mutate(prob = P_w(world) * P_Q(QuD) * interpret(message, world, inter)) %>%
     group_by(message, inter) %>%
