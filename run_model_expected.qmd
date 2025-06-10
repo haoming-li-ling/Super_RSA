@@ -10,17 +10,13 @@ format:
 ```{r}
 #| output: false
 
-source("synthesis_maximin.R")
+source("synthesis.R")
 ```
 
 # Maximin
 
-The first-level speaker utility becomes this:
-$$U_1(u \mid w, Q) = \min_i \log\left(\sum_{v \sim_Q w} L_0(v, Q \mid u, i)\right) - c(u)$$
-Compare with the original:
-$$U_1(u \mid w, Q) = \sum_i P(i)\log\left(\sum_{v \sim_Q w} L_0(v, Q \mid u, i)\right) - c(u)$$
-$$U'_1(u \mid w) = \sum_{i} P(i) \log (L'_0(w \mid u, i)) - c(u)$$
-$$U''_1(u \mid w, Q) = k \cdot U_1(u \mid w, Q) + U'_1(u \mid w)$$
+The first-level speaker utility becomes this: $$U_1(u \mid w, Q) = \min_i\left(\log\left(\sum_{v \sim_Q w} L_0(v, Q \mid u, i)\right) - c(u)\right)$$ Compare with the original: $$U_1(u \mid w, Q) = \sum_i\left(P(i)\log\left(\sum_{v \sim_Q w} L_0(v, Q \mid u, i)\right)\right) - c(u)$$
+
 # Parameters and initial setup
 
 ```{r}
@@ -29,29 +25,30 @@ n <- 2
 
 # cost_orig <- costp()
 # cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `n!1` = 2.6)
-# cost_neg_exa_cheap <- costp(
-#   NPsg = 0,
-#   NPpl = 0,
-#   nNPsg = 0.1, 
-#   nNPpl = 0.1, 
-#   `!1` = 0.9, 
-#   `n!1` = 1, 
-#   `+2` = 0.9, 
-#   `n+2` = 1, 
-#   `null` = -0.1
-# )
-
 cost_neg_exa_cheap <- costp(
-  NPsg = 0.1,
-  NPpl = 0.1,
-  nNPsg = 0.2, 
-  nNPpl = 0.2, 
+  NPsg = 0,
+  NPpl = 0,
+  nNPsg = 0.1, 
+  nNPpl = 0.1, 
   `!1` = 0.9, 
   `n!1` = 1, 
   `+2` = 0.9, 
   `n+2` = 1, 
-  `null` = 0
+  `null` = -0.1
 )
+
+# cost_neg_exa_cheap <- costp(
+#   NPsg = 0,
+#   NPpl = 0,
+#   nNPsg = 0.5, 
+#   nNPpl = 0.5, 
+#   `!1` = 100, 
+#   `n!1` = 100,
+#   `+2` = 100, 
+#   `n+2` = 100, 
+#   `null` = -.1
+# )
+
 # cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 0.9, `n!1` = 1)
 # cost_neg_exa_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `!1` = 100, `n!1` = 100)
 # cost <- cost_neg_cheap
@@ -70,11 +67,11 @@ P_Q_Qex <- P_Qp(Qex = 10)
 P_Q_Qfine <- P_Qp(Qfine = 10)
 
 P_i_flat <- P_ip()
-P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.1, LitLit = 1.21)
+# P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.1, LitLit = 1.21)
 # P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.4, LitLit = 2)
-# P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 3, LitLit = 9)
-# P_i <- P_i_penalize_embedded
-P_i <- P_i_flat
+P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 3, LitLit = 9)
+P_i <- P_i_penalize_embedded
+# P_i <- P_i_flat
 P_i("iLitLitLitLit")
 ```
 
@@ -89,8 +86,6 @@ check_Ln(n)
 check_Ln_w(n)
 ```
 
-
-
 # Flat world priors, Qex bias
 
 ```{r}
@@ -102,9 +97,14 @@ check_Ln(n)
 check_Ln_w(n)
 ```
 
+```{r}
+P_w <- P_w_flat
+P_Q <- P_Q_Qfine
 
-
-
+check_Sn(n)
+check_Ln(n)
+check_Ln_w(n)
+```
 
 # Flat world priors, Qml bias
 
@@ -122,7 +122,8 @@ check_Ln_w(n)
 
 ```{r}
 P_w <- P_w_sg_odd
-P_Q <- P_Q_Qex
+# P_Q <- P_Q_Qex
+P_Q <- P_Q_flat
 
 check_Sn(n - 1) # Oddness is here
 # check_Ln(n - 1)
@@ -135,6 +136,7 @@ check_Sn(n)
 # check_Un(n)
 check_Ln_w(n)
 ```
+
 ```{r}
 P_w <- P_w_sg_odd
 P_Q <- P_Q_flat
@@ -152,6 +154,7 @@ check_Ln_w(n)
 ```
 
 # nNPpl oddness (w2+ biased againt, Qex bias)
+
 ```{r}
 P_w <- P_w_pl_odd
 P_Q <- P_Q_Qex
@@ -160,4 +163,3 @@ check_Sn(n)
 # check_Ln(n)
 check_Ln_w(n)
 ```
-

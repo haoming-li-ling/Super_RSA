@@ -10,7 +10,7 @@ format:
 ```{r}
 #| output: false
 
-source("synthesis_maximin.R")
+source("synthesis_hybrid.R")
 ```
 
 # Maximin
@@ -26,6 +26,7 @@ $$U''_1(u \mid w, Q) = k \cdot U_1(u \mid w, Q) + U'_1(u \mid w)$$
 ```{r}
 lambda <- 2 # Rationality parameter
 n <- 2
+k <- 1
 
 # cost_orig <- costp()
 # cost_neg_cheap <- costp(nNPsg = 0.1, nNPpl = 0.1, `n!1` = 2.6)
@@ -76,6 +77,7 @@ P_i_penalize_embedded <- P_ip(ExhExh = 1, ExhLit = 1.1, LitLit = 1.21)
 # P_i <- P_i_penalize_embedded
 P_i <- P_i_flat
 P_i("iLitLitLitLit")
+U1()
 ```
 
 # Flat world and QuD priors
@@ -87,6 +89,8 @@ P_Q <- P_Q_flat
 check_Sn(n)
 check_Ln(n)
 check_Ln_w(n)
+
+Sn(n)
 ```
 
 
